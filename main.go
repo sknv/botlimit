@@ -52,8 +52,8 @@ func (s *Rest) Count(w http.ResponseWriter, r *http.Request) {
 	var count int
 	s.mu.Lock()
 	for _, limiter := range s.users {
-		limiterCopy := *limiter   // get a copy to avoid one more countable request below
-		if !limiterCopy.Allow() { // thread-safe
+		limiterCopy := *limiter // get a copy to avoid one more countable request below
+		if !limiterCopy.Allow() {
 			count++
 		}
 	}
@@ -64,15 +64,14 @@ func (s *Rest) Count(w http.ResponseWriter, r *http.Request) {
 // Touch increases smoothed request counter per a user. Time complexity is O(1).
 func (s *Rest) Touch(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
+	s.mu.Lock()
 	limiter := s.getUserLimiter(userID)
-	limiter.Reserve() // thread-safe
+	limiter.Reserve()
+	s.mu.Unlock()
 	render.PlainText(w, r, "OK")
 }
 
 func (s *Rest) getUserLimiter(userID string) *rate.Limiter {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	limiter, found := s.users[userID]
 	if !found {
 		limit := s.limit + 1
