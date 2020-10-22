@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	botLimit    = 10
+	botLimit    = 100
 	botInterval = time.Minute
 )
 
